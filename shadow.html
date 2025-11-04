@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aditya | Static</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000;
+            --text: #0f0f0f;
+            --line: #0a0a0a;
+            --highlight: #00ff00;
+            --cursor: #00ff00;
+            --glow: rgba(0, 255, 0, 0.12);
+            --accent-glow: rgba(0, 255, 0, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            scroll-behavior: smooth;
+            cursor: none;
+            overflow-x: hidden;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.05rem;
+            line-height: 1.88;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+            overflow-y: scroll;
+        }
+
+        /* === GLOWING CURSOR === */
+        .cursor-glow {
+            position: fixed;
+            width: 32px;
+            height: 32px;
+            border: 1.5px solid rgba(0, 255, 0, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            box-shadow: 
+                0 0 20px var(--glow),
+                0 0 40px var(--glow),
+                inset 0 0 15px rgba(0, 255, 0, 0.1);
+            transition: opacity 0.4s ease;
+        }
+        .cursor-glow.active { opacity: 1; }
+
+        /* === SECTION CONTAINER === */
+        .section {
+            min-height: 100vh;
+            padding: 140px 20px 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            opacity: 0;
+            transform: translateY(60px);
+            transition: all 1.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* === IMMERSIVE CARD === */
+        .card {
+            max-width: 760px;
+            width: 100%;
+            background: rgba(8, 8, 12, 0.75);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(0, 255, 0, 0.12);
+            border-radius: 20px;
+            padding: 60px 50px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(0, 255, 0, 0.08),
+                inset 0 1px 0 rgba(0, 255, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            transform: perspective(1000px) rotateX(8deg);
+            transition: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .section.visible .card {
+            transform: perspective(1000px) rotateX(0deg);
+        }
+
+        .card:hover {
+            transform: perspective(1000px) rotateX(0deg) translateY(-8px);
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.95),
+                0 0 60px var(--accent-glow);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0) 0px,
+                rgba(0, 0, 0, 0.03) 1px,
+                rgba(0, 0, 0, 0) 2px
+            );
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        .section.visible .card::before {
+            opacity: 1;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border: 2px solid transparent;
+            border-radius: 22px;
+            background: linear-gradient(45deg, transparent, var(--accent-glow), transparent) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            animation: breathe 4s ease-in-out infinite;
+        }
+        .section.visible .card::after {
+            opacity: 1;
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+        }
+
+        /* === TITLE === */
+        .card h2 {
+            font-size: 1.9rem;
+            font-weight: 400;
+            color: var(--highlight);
+            margin-bottom: 32px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: titleIn 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        .section.visible .card h2 { animation-delay: 0.4s; }
+
+        .card h2:hover {
+            animation: glitch 0.3s linear;
+        }
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 #f00, -2px 0 #0f0; }
+            25% { text-shadow: -2px 0 #0ff, 2px 0 #f0f; }
+            50% { text-shadow: 2px 0 #00f, -2px 0 #ff0; }
+            100% { text-shadow: none; }
+        }
+
+        /* === TEXT === */
+        .card p {
+            font-size: 1.08rem;
+            color: #0e0e0e;
+            margin-bottom: 20px;
+            text-align: justify;
+            font-weight: 300;
+            line-height: 2;
+            opacity: 0;
+            transform: translateY(15px);
+            animation: textIn 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        .section.visible .card p { animation-delay: 0.7s; }
+        .card p:last-child { margin-bottom: 0; }
+
+        @keyframes titleIn { to { opacity: 1; transform: translateY(0); } }
+        @keyframes textIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* === HEADER === */
+        .header {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            padding: 24px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,255,0,0.08);
+            transition: all 0.5s ease;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: var(--highlight);
+            font-weight: 400;
+            letter-spacing: -0.8px;
+        }
+        .header .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.5em;
+            background: var(--cursor);
+            animation: blink 1.2s steps(1) infinite;
+            margin-left: 3px;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* === NAV DOTS === */
+        .nav-dots {
+            position: fixed;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 99;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: rgba(0,255,0,0.15);
+            border: 1px solid rgba(0,255,0,0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+        }
+        .dot::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 1px solid transparent;
+            border-radius: 50%;
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+        .dot:hover::before {
+            opacity: 1;
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .dot.active {
+            background: var(--highlight);
+            transform: scale(1.6);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        /* === BGM TOGGLE === */
+        .bgm-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 52px;
+            height: 52px;
+            background: rgba(10,10,10,0.8);
+            border: 1.5px solid rgba(0,255,0,0.2);
+            border-radius: 50%;
+            cursor: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(15px) scale(0.85);
+            transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 100;
+            backdrop-filter: blur(6px);
+        }
+        .bgm-toggle.visible { opacity: 0.5; transform: translateY(0) scale(1); }
+        .bgm-toggle:hover {
+            opacity: 1;
+            transform: scale(1.2);
+            box-shadow: 0 0 30px var(--accent-glow);
+            border-color: var(--highlight);
+        }
+        .bgm-toggle svg {
+            width: 22px;
+            height: 22px;
+            fill: #00ff00;
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .bgm-toggle.playing svg {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px var(--accent-glow)); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 16px var(--accent-glow)); }
+        }
+
+        /* === TELEGRAM CALL-TO-ACTION (END) === */
+        .telegram-cta {
+            text-align: center;
+            padding: 120px 20px 80px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1.5s cubic-bezier(0.23, 1, 0.32, 1) 0.5s forwards;
+        }
+        .telegram-cta p {
+            font-size: 1.1rem;
+            color: #0a0a0a;
+            margin-bottom: 32px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+        .telegram-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 0, 0.15);
+            border-radius: 50px;
+            padding: 16px 32px;
+            color: var(--highlight);
+            font-size: 1.1rem;
+            font-weight: 400;
+            text-decoration: none;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+        }
+        .telegram-link:hover {
+            background: rgba(0, 255, 0, 0.08);
+            color: #fff;
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0, 255, 0, 0.2);
+            border-color: var(--highlight);
+        }
+        .telegram-link img {
+            width: 36px;
+            height: 36px;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.4));
+            transition: transform 0.4s ease;
+        }
+        .telegram-link:hover img {
+            transform: scale(1.15) rotate(8deg);
+        }
+        .telegram-link span {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        /* === FOOTER === */
+        footer {
+            text-align: center;
+            padding: 60px 20px 50px;
+            color: #0a0a0a;
+            font-size: 0.82rem;
+            opacity: 0.5;
+            letter-spacing: 1px;
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .section { padding: 110px 15px 70px; }
+            .card { padding: 40px 30px; border-radius: 16px; }
+            .card h2 { font-size: 1.6rem; }
+            .header { padding: 18px 25px; }
+            .header h1 { font-size: 1.6rem; }
+            .nav-dots { right: 20px; gap: 12px; }
+            .dot { width: 10px; height: 10px; }
+            .bgm-toggle { bottom: 20px; right: 20px; width: 46px; height: 46px; }
+            .cursor-glow { display: none; }
+            .telegram-cta { padding: 100px 15px 60px; }
+            .telegram-link { padding: 14px 24px; font-size: 1rem; }
+            .telegram-link img { width: 32px; height: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Glowing Cursor -->
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- Header -->
+<header class="header">
+    <h1>Aditya<span class="cursor"></span></h1>
+    <div class="date">29 Oct • 17 • Static</div>
+</header>
+
+<!-- Navigation Dots -->
+<div class="nav-dots">
+    <div class="dot" data-section="0"></div>
+    <div class="dot" data-section="1"></div>
+    <div class="dot" data-section="2"></div>
+    <div class="dot" data-section="3"></div>
+    <div class="dot" data-section="4"></div>
+    <div class="dot" data-section="5"></div>
+    <div class="dot" data-section="6"></div>
+    <div class="dot" data-section="7"></div>
+</div>
+
+<!-- Section 1 -->
+<section class="section" id="section0">
+    <div class="card">
+        <h2>I Don’t Trust</h2>
+        <p>I don’t trust people.<br>Not friends, not relationships. Every time I trusted someone, they left. So now I keep my distance. I don’t open up. I don’t rely on anyone. If I feel hurt or heavy, I shut down and disappear. It’s easier than getting attached and ending up disappointed.</p>
+    </div>
+</section>
+
+<!-- Section 2 -->
+<section class="section" id="section1">
+    <div class="card">
+        <h2>I Feel Too Much</h2>
+        <p>I feel things too strongly and it pisses me off. Small stuff affects me more than it should. If someone stops talking like before, my mind jumps to the conclusion that they don’t want me around. So I stop trying. I stop talking. I cut myself out before they do.</p>
+    </div>
+</section>
+
+<!-- Section 3 -->
+<section class="section" id="section2">
+    <div class="card">
+        <h2>Friendships</h2>
+        <p>Friendships don’t feel real anymore. People lose interest fast. They replace you the moment someone better shows up. If someone acts different, gives short replies, or starts ignoring me, I don’t ask questions. I just back out. I don’t beg, I don’t chase, I don’t explain. If they care, they’ll notice. They usually don’t.</p>
+    </div>
+</section>
+
+<!-- Section 4 -->
+<section class="section" id="section3">
+    <div class="card">
+        <h2>Relationships</h2>
+        <p>Relationships are the same. I don’t believe in “forever” or “loyalty.” People talk big, but they leave when they get bored. Words mean nothing without actions, and most people don’t have consistency. I’m not interested in someone who treats me like an option. If someone wants me, they show up. Simple.</p>
+    </div>
+</section>
+
+<!-- Section 5 -->
+<section class="section" id="section4">
+    <div class="card">
+        <h2>I Get Attached</h2>
+        <p>I get attached fast, but I never show it.<br>I care too much, but I act like I don’t.<br>I hate that about myself.</p>
+    </div>
+</section>
+
+<!-- Section 6 -->
+<section class="section" id="section5">
+    <div class="card">
+        <h2>When It Gets Heavy</h2>
+        <p>When life gets heavy — depression, anxiety, suicidal thoughts — I don’t reach out. I stay quiet. I isolate. I don’t tell anyone what I’m dealing with. Not because I’m strong, but because I don’t trust anyone to actually give a damn.</p>
+    </div>
+</section>
+
+<!-- Section 7 -->
+<section class="section" id="section6">
+    <div class="card">
+        <h2>I Push Away</h2>
+        <p>I push people away so they don’t get the chance to hurt me.<br>I distance myself before they change on me.<br>I prefer being alone because it’s predictable.</p>
+    </div>
+</section>
+
+<!-- Section 8 -->
+<section class="section" id="section7">
+    <div class="card">
+        <h2>This Is Me</h2>
+        <p>I’m not “fine.” I just don’t talk about it.<br>I’m not “cold.” I’m tired.<br>This is who I am.</p>
+    </div>
+</section>
+
+<!-- TELEGRAM CALL-TO-ACTION -->
+<div class="telegram-cta">
+    <p>If you want to become friends or talk — message me on Telegram.</p>
+    <a href="https://t.me/FadedWords17" target="_blank" class="telegram-link">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram">
+        <span>@FadedWords17</span>
+    </a>
+</div>
+
+<!-- Footer -->
+<footer>
+    © 2025 • Static • No one enters. No one leaves.
+</footer>
+
+<!-- BGM Toggle -->
+<div class="bgm-toggle" id="bgmToggle" title="Toggle ambient lofi">
+    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+</div>
+
+<audio id="lofi" loop preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2023/06/26/audio_8e0c7d7e5e.mp3?filename=lofi-chill-vibes-159566.mp3" type="audio/mp3">
+</audio>
+
+<script>
+    // === GLOWING CURSOR FOLLOW ===
+    const cursor = document.getElementById('cursorGlow');
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX; mouseY = e.clientY;
+        if (!cursor.classList.contains('active')) cursor.classList.add('active');
+    });
+    function animateCursor() {
+        cursorX += (mouseX - cursorX) * 0.18;
+        cursorY += (mouseY - cursorY) * 0.18;
+        cursor.style.left = `${cursorX}px`;
+        cursor.style.top = `${cursorY}px`;
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // === IMMERSIVE SECTION REVEAL ===
+    const sections = document.querySelectorAll('.section');
+    const dots = document.querySelectorAll('.dot');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                const index = Array.from(sections).indexOf(entry.target);
+                dots.forEach((d, i) => d.classList.toggle('active', i === index));
+            }
+        });
+    }, { threshold: 0.7, rootMargin: '0px 0px -15% 0px' });
+    sections.forEach(sec => observer.observe(sec));
+
+    // Dot navigation
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const idx = dot.dataset.section;
+            sections[idx].scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    // === BGM CONTROL + AUTO-PAUSE ===
+    const audio = document.getElementById('lofi');
+    const toggle = document.getElementById('bgmToggle');
+    let isPlaying = false;
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && isPlaying) {
+            audio.pause();
+            toggle.classList.remove('playing');
+            isPlaying = false;
+        }
+    });
+
+    document.body.addEventListener('click', () => {
+        toggle.classList.add('visible');
+    }, { once: true });
+
+    function tryAutoplay() {
+        audio.volume = 0.15;
+        audio.play().catch(() => {});
+    }
+
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (isPlaying) {
+            audio.pause();
+            toggle.classList.remove('playing');
+        } else {
+            audio.play().catch(() => alert('Audio blocked. Click again.'));
+            toggle.classList.add('playing');
+        }
+        isPlaying = !isPlaying;
+    });
+
+    document.body.addEventListener('click', tryAutoplay, { once: true });
+
+    // === TYPEWRITER CURSOR BLINK ===
+    const blinkCursor = document.querySelector('.cursor');
+    setInterval(() => {
+        blinkCursor.style.opacity = blinkCursor.style.opacity === '0' ? '1' : '0';
+    }, 600);
+</script>
+
+</body>
+</html>
